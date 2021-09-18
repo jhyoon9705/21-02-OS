@@ -30,7 +30,7 @@ void read_command ( char command[], char *params[]) {
 
     while (pointer != NULL) {
         arr[i++] = pointer;
-    pointer = strtok(NULL, " \n");
+        pointer = strtok(NULL, " \n");
     }
 
     strcpy(command, arr[0]);
@@ -45,13 +45,13 @@ void read_command ( char command[], char *params[]) {
 
 int main() {
     char cmd[50];
-    char command[50], *parameters[50];
-    char *const ps_envp[] = {(char*) "PATH=/bin", 0};
+    char command[50], *ps_argv[50];
+    char *const ps_envp[] = {"PATH=/bin", 0};
 
     while (TRUE) {
 
         type_prompt();
-    read_command(command, parameters);
+    read_command(command, ps_argv);
 
     if (strcmp(command, "exit")==0)
             break;
@@ -61,7 +61,7 @@ int main() {
         else {
         strcpy(cmd, "/bin/");
         strcat(cmd, command);
-        execve(cmd, parameters, ps_envp);
+        execve(cmd, ps_argv, ps_envp);
        
         }
        
