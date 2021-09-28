@@ -12,25 +12,22 @@ void type_prompt(){
 }
 
 void read_command ( char command[], char *params[]) {
-    char com[50] = {0};
+    char com[100] = {0};
     int counter = 0, i = 0;
-    char *arr[50], *pointer;
+    char *arr[100], *pointer;
 
     while (TRUE) {
         char c = fgetc(stdin);
         com[counter++] = c;
-        if(c=='\n')
-        break;
+        if(c=='\n') 
+	    break;
     }
 
-    if (counter == 1)
-        return;
-    
-    pointer = strtok(com, " \n");
+     pointer = strtok(com, " \n");
 
     while (pointer != NULL) {
         arr[i++] = pointer;
-        pointer = strtok(NULL, " \n");
+	pointer = strtok(NULL, " \n");
     }
 
     strcpy(command, arr[0]);
@@ -44,27 +41,30 @@ void read_command ( char command[], char *params[]) {
 
 
 int main() {
-    char cmd[50];
-    char command[50], *ps_argv[50];
+    char cmd[100];
+    char command[100], *ps_argv[100];
     char *const ps_envp[] = {"PATH=/bin", 0};
 
     while (TRUE) {
 
         type_prompt();
-    read_command(command, ps_argv);
+	read_command(command, ps_argv);
 
-    if (strcmp(command, "exit")==0)
+	if (strcmp(command, "exit")==0)
             break;
 
-        if(fork()!=0)
+        if(fork()!=0) {
+	/* Parent Code */
             wait(NULL);
+    }
         else {
-        strcpy(cmd, "/bin/");
-        strcat(cmd, command);
-        execve(cmd, ps_argv, ps_envp);
-       
+	/* Child Code */
+	    strcpy(cmd, "/bin/"); 
+	    strcat(cmd, command);
+	    execve(cmd, ps_argv, ps_envp);
+	    break;
         }
        
     }
     return 0;
-}  
+} 
