@@ -26,6 +26,7 @@ int directoryCopy(char *srcPath, char *dstPath) {
   memset(&dirt, 0, sizeof(dirt));
   memset(&statBuf, 0, sizeof(statBuf));
 
+  // open directory
   if((pdir = opendir(srcPath)) <= 0) {
     perror("opendir");
     return -1;
@@ -51,19 +52,22 @@ int directoryCopy(char *srcPath, char *dstPath) {
           return -1;
         }
         fileCopy(in, copied);
-        close(copied);
         close(in);
-        
+        close(copied);
       }  
       // directory -> directory -> ...
-      else {
+      else if(S_ISDIR(statBuf.st_mode)){
         if(strcmp(dirt->d_name, ".") && strcmp(dirt->d_name, "..")) {
           strcpy(newDstPath, dstPath);
           strcat(newDstPath, "/");
           strcat(newDstPath, dirt->d_name);
-          mkdir(newDstPath, 700);
+          mkdir(newDstPath, 700); // owner's r/w/x mode
           directoryCopy(newSrcPath, newDstPath);
         }
+      }
+      // error case
+      else {
+        return -1;
       }
     }
     closedir(pdir);
@@ -113,7 +117,7 @@ int main (int argc, char **argv) {
     }
     
     // from regular file to directory
-    else {
+    else if(S_ISDIR(statBuf.st_mode)){
       strcpy(dstPath, dst);
       strcat(dstPath, "/");
       strcat(dstPath, src); 
@@ -123,11 +127,16 @@ int main (int argc, char **argv) {
         return -1;
       }
       fileCopy(in, copied);
+      close(in);
       close(copied);
+    }
+    // error case
+    else {
+      return -1;
     }
   }
   
-  else{
+  else if(S_ISDIR(statBuf.st_mode)){
     fstat(out, &statBuf);
     // from directory to regular file(error)
     if(S_ISREG(statBuf.st_mode)) {
@@ -135,12 +144,20 @@ int main (int argc, char **argv) {
       return -1;
     }
     // from directory to directory
-    else {
+    else if(S_ISDIR(statBuf.st_mode)){
       directoryCopy(src, dst);
     }
-    
+    // error case
+    else {
+      return -1;
+    }    
   }
-  close(out);
+  
+  //error case
+  else {
+    return -1;
+  }
   close(in);
+  close(out);
   return 0;
 }
