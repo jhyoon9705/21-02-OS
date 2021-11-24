@@ -7,7 +7,15 @@
 #include <string.h>
 
 char buf[1024];
+char newPath[255];
 char *errMsg = "Usage: 'copy file1 file2' or 'copy dir1 dir2' or 'copy file dir'\n";
+
+char* makePath(char* src, char* dst) {
+  strcpy(newPath, src);
+  strcat(newPath, "/");
+  strcat(newPath, dst);
+  return newPath;
+}
 
 void fileCopy(int fd, int dest) {
   int n;
@@ -33,9 +41,7 @@ int directoryCopy(char *srcPath, char *dstPath) {
   }
 
   while((dirt = readdir(pdir)) != NULL) {
-    strcpy(newSrcPath, srcPath);
-    strcat(newSrcPath, "/");
-    strcat(newSrcPath, dirt->d_name);
+    strcpy(newSrcPath, makePath(srcPath, dirt->d_name));
     lstat(newSrcPath, &statBuf);
       // directory -> regular file
       if(S_ISREG(statBuf.st_mode)) {
@@ -43,9 +49,7 @@ int directoryCopy(char *srcPath, char *dstPath) {
           perror(srcPath);
           return -1;
         }
-        strcpy(newDstPath, dstPath);
-        strcat(newDstPath, "/");
-        strcat(newDstPath, dirt->d_name);
+        strcpy(newDstPath, makePath(dstPath, dirt->d_name));
         
         if ((copied = open(newDstPath, O_WRONLY|O_CREAT|O_TRUNC , S_IRUSR|S_IWUSR)) < 0) {
           perror(dstPath);
@@ -58,9 +62,7 @@ int directoryCopy(char *srcPath, char *dstPath) {
       // directory -> directory -> ...
       else if(S_ISDIR(statBuf.st_mode)){
         if(strcmp(dirt->d_name, ".") && strcmp(dirt->d_name, "..")) {
-          strcpy(newDstPath, dstPath);
-          strcat(newDstPath, "/");
-          strcat(newDstPath, dirt->d_name);
+          strcpy(newDstPath, makePath(dstPath, dirt->d_name));
           mkdir(newDstPath, 700); // owner's r/w/x mode
           directoryCopy(newSrcPath, newDstPath);
         }
@@ -118,9 +120,7 @@ int main (int argc, char **argv) {
     
     // from regular file to directory
     else if(S_ISDIR(statBuf.st_mode)){
-      strcpy(dstPath, dst);
-      strcat(dstPath, "/");
-      strcat(dstPath, src); 
+      strcpy(dstPath, makePath(dst, src));
 
       if ((copied = open(dstPath, O_WRONLY|O_CREAT|O_TRUNC , S_IRUSR|S_IWUSR)) < 0) {
         perror(dstPath);
@@ -134,6 +134,7 @@ int main (int argc, char **argv) {
     else {
       return -1;
     }
+    return 0;
   }
   
   else if(S_ISDIR(statBuf.st_mode)){
@@ -151,6 +152,7 @@ int main (int argc, char **argv) {
     else {
       return -1;
     }    
+    return 0;
   }
   
   //error case
